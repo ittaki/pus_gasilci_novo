@@ -116,4 +116,4 @@ def render():
     df_prikaz["cas"] = df_prikaz["cas"].dt.strftime('%d.%m.%Y %H:%M')
     df_prikaz.columns = ["Čas (UTC)", "Magnituda (M)", "Globina (km)", "Lokacija / Regija", "Latitude", "Longitude"]
     
-    st.dataframe(df_prikaz.head(50), use_container_width=True)
+    st.dataframe(df_prikaz.head(50), width='stretch')
