@@ -1,4 +1,5 @@
 import streamlit as st
+from PIL import Image
 import folium
 import os
 from folium import plugins
@@ -295,10 +296,18 @@ def render():
     with col1:
         st.subheader("✅ Usable RGB")
 
+        if isinstance(usable["rgb"], np.ndarray):
+            # Pretp slika u formatu (visina, sirina, kanali)
+            # numpy u uint8
+            img_data = usable["rgb"].astype(np.uint8)
+            image = Image.fromarray(img_data)
+            
+            # Prikaži konvertovanu sliku
+            st.image(image, width='stretch')
+        else:
+            st.error("Podatak nije u formatu slike!")
+            
         if usable:
-            st.write("DEBUG: Sta je u usable['rgb']?")
-            st.write(type(usable["rgb"]))
-            st.write(usable["rgb"])
             st.image(usable["rgb"], width='stretch')
             st.caption(f"{usable['datetime']} | cloud {usable['cloud']}")
 
