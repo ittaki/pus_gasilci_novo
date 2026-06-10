@@ -259,15 +259,20 @@ def render():
     # =================================================
     bbox = BBox(st.session_state.aoi, CRS.WGS84)
 
+    # 1. Traženje scena
     usable_scenes = search_scenes(bbox, cloud_filter="eo:cloud_cover < 20")
     raw_scenes = search_scenes(bbox)
 
-    usable_scene = usable_scenes[0] if usable_scenes else None
-    raw_scene = raw_scenes[0]
+    # 2. Definiši po dve scene
+    # Koristimo build_scene funkciju za svaku od njih
+    usable_1 = build_scene(bbox, usable_scenes[0]) if len(usable_scenes) > 0 else None
+    usable_2 = build_scene(bbox, usable_scenes[1]) if len(usable_scenes) > 1 else None
+    
+    raw_1 = build_scene(bbox, raw_scenes[0]) if len(raw_scenes) > 0 else None
+    raw_2 = build_scene(bbox, raw_scenes[1]) if len(raw_scenes) > 1 else None
 
     with st.spinner("Loading satellite data..."):
-        usable = build_scene(bbox, usable_scene)
-        raw = build_scene(bbox, raw_scene)
+        pass
 
     # =================================================
     # TABLE
@@ -291,41 +296,28 @@ def render():
     # DISPLAY
     # ================================================
 
+    def show_sat_image(data, title, col):
+        with col:
+            st.subheader(title)
+            if data and "rgb" in data:
+                # Konverzija za RGB
+                img_rgb = Image.fromarray(data["rgb"].astype(np.uint8))
+                st.image(img_rgb, width='stretch')
+                st.caption(f"RGB | {data['datetime']}")
+            if data and "fire" in data:
+                # Konverzija za FIRE
+                img_fire = Image.fromarray(data["fire"].astype(np.uint8))
+                st.image(img_fire, width='stretch')
+                st.caption(f"FIRE | {data['datetime']} | Cloud: {data['cloud']:.1f}%")
+            elif not data:
+                st.warning("Nema slike")
+
+    # Kreiranje kolona
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
 
-    with col1:
-        st.subheader("✅ Usable RGB")
-
-        if isinstance(usable["rgb"], np.ndarray):
-            # Pretp slika u formatu (visina, sirina, kanali)
-            # numpy u uint8
-            img_data = usable["rgb"].astype(np.uint8)
-            image = Image.fromarray(img_data)
-            
-            # Prikaži konvertovanu sliku
-            st.image(image, width='stretch')
-        else:
-            st.error("Podatak nije u formatu slike!")
-            
-        if usable:
-            st.image(usable["rgb"], width='stretch')
-            st.caption(f"{usable['datetime']} | cloud {usable['cloud']}")
-
-    with col2:
-        st.subheader("🔥 Usable FIRE")
-        if usable:
-            st.image(usable["fire"], width='stretch')
-            st.caption(f"{usable['datetime']} | cloud {usable['cloud']}")
-
-    with col3:
-        st.subheader("☁️ RAW RGB")
-        st.image(raw["rgb"], width='stretch')
-        st.caption(f"{raw['datetime']} | cloud {raw['cloud']}")
-
-    with col4:
-        st.subheader("🔥 RAW FIRE")
-
-        if raw:
-            st.image(raw["fire"], width='stretch')
-            st.caption(f"{raw['datetime']} | cloud {raw['cloud']}")
+    # Prikazivanje
+    show_sat_image(usable_1, "✅ Usable 1 (Čista)", col1)
+    show_sat_image(usable_2, "✅ Usable 2 (Čista)", col2)
+    show_sat_image(raw_1, "☁️ RAW 1 (Najnovija)", col3)
+    show_sat_image(raw_2, "☁️ RAW 2 (Prethodna)", col4)
