@@ -296,23 +296,23 @@ def render():
         st.subheader("✅ Usable RGB")
 
         if usable:
-            st.image(usable["rgb"], use_container_width=True)
+            st.image(usable["rgb"], width=None)
             st.caption(f"{usable['datetime']} | cloud {usable['cloud']}")
 
     with col2:
         st.subheader("🔥 Usable FIRE")
         if usable:
-            st.image(usable["fire"], use_container_width=True)
+            st.image(usable["fire"], width=None)
             st.caption(f"{usable['datetime']} | cloud {usable['cloud']}")
 
     with col3:
         st.subheader("☁️ RAW RGB")
-        st.image(raw["rgb"], use_container_width=True)
+        st.image(raw["rgb"], width=None)
         st.caption(f"{raw['datetime']} | cloud {raw['cloud']}")
 
     with col4:
         st.subheader("🔥 RAW FIRE")
 
         if raw:
-            st.image(raw["fire"], use_container_width=True)
+            st.image(raw["fire"], width=None)
             st.caption(f"{raw['datetime']} | cloud {raw['cloud']}")
