@@ -91,12 +91,12 @@ st.markdown("""
 
 # 4. GORNJI WEB MENI - Sredi redosled da odgovara tvojim "with" blokovima
 tab_home, tab_fires, tab_floods, tab_earthquakes, tab_satelit, tab_help, tab_about = st.tabs([
-    "🏠 Početna", 
+    "🏠 Začetna", 
     "🔥 Požari", 
     "🌊 Poplave", 
     "🌋 Potresi", 
     "🛰️ Satelit",
-    "ℹ️ Pomoć i Protokoli", 
+    "ℹ️ Pomoč in protokoli", 
     "👥 O projektu"
 ])
 

@@ -157,7 +157,7 @@ def build_scene(bbox, scene):
 # =====================================================
 def render():
     
-    st.title("🛰️ Sentinel-2 Fire Monitoring")
+    st.title("🛰️ Satelitsko spremljanje požarov (Sentinel-2)")
 
     # =================================================
     # SESSION STATE
@@ -174,7 +174,7 @@ def render():
     # =================================================
     # MAP
     # =================================================
-    st.subheader("📍 Draw AOI (rectangle)")
+    st.subheader("📍 Nariši AOI (pravokotnik) za želeno območje")
 
     m = folium.Map(location=[44.8, 20.4], zoom_start=7)
 
@@ -220,7 +220,7 @@ def render():
             st.session_state.aoi = new_aoi
             st.session_state.aoi_hash = new_hash
             st.session_state.run = False
-            st.info("AOI updated. Click 'Load satellite data'")
+            st.info("AOI posodobljen. Klikni 'Naloži satelitske podatke'")
 
     # =================================================
     # HANDLE DELETE (TRASHCAN)
@@ -235,12 +235,12 @@ def render():
     # =================================================
 
     if st.session_state.aoi:
-        if st.button("🛰️ Load satellite data"):
+        if st.button("🛰️ Naloži satelitske podatke"):
             st.session_state.run = True
             st.rerun()
 
 
-    if st.button("🔄 Reset AOI"):
+    if st.button("🔄 Ponastavi AOI"):
         st.session_state.aoi = None
         st.session_state.aoi_hash = None
         st.session_state.run = False
@@ -250,7 +250,7 @@ def render():
     # BLOCK UNTIL USER CLICK
     # =================================================
     if not st.session_state.run:
-        st.info("Draw AOI → click Load satellite data")
+        st.info("Nariši AOI → klikni Naloži satelitske podatke")
         st.stop()
 
 
@@ -278,12 +278,12 @@ def render():
     # TABLE
     # =================================================
 
-    st.subheader("📊 Latest RAW scenes")
+    st.subheader("📊 Najnovejši izvirni posnetki")
 
     df = pd.DataFrame([
         {
-            "datetime": s["properties"]["datetime"],
-            "cloud": s["properties"].get("eo:cloud_cover")
+            "datum": s["properties"]["datetime"],
+            "oblaki": s["properties"].get("eo:cloud_cover")
         }
 
         for s in raw_scenes[:10]
@@ -308,16 +308,16 @@ def render():
                 # Konverzija za FIRE
                 img_fire = Image.fromarray(data["fire"].astype(np.uint8))
                 st.image(img_fire, width='stretch')
-                st.caption(f"FIRE | {data['datetime']} | Cloud: {data['cloud']:.1f}%")
+                st.caption(f"FIRE | {data['datetime']} | Oblačnost: {data['cloud']:.1f}%")
             elif not data:
-                st.warning("Nema slike")
+                st.warning("Ni slike")
 
     # Kreiranje kolona
     col1, col2 = st.columns(2)
     col3, col4 = st.columns(2)
 
     # Prikazivanje
-    show_sat_image(usable_1, "✅ Usable 1 (Čista)", col1)
-    show_sat_image(usable_2, "✅ Usable 2 (Čista)", col2)
-    show_sat_image(raw_1, "☁️ RAW 1 (Najnovija)", col3)
-    show_sat_image(raw_2, "☁️ RAW 2 (Prethodna)", col4)
+    show_sat_image(usable_1, "✅ Čista 1 (Brez oblakov)", col1)
+    show_sat_image(usable_2, "✅ Čista 2 (Brez oblakov)", col2)
+    show_sat_image(raw_1, "☁️ Izvirna 1 (Najnovejša)", col3)
+    show_sat_image(raw_2, "☁️ Izvirna 2 (Prejšnja)", col4)

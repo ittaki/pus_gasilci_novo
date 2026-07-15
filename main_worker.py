@@ -8,7 +8,7 @@ from etl.etl_earthquake import run_quakes_etl
 from etl.etl_osm import run_osm_etl
 from etl.etl_promet import run_promet_etl
 from etl.etl_air_quality import run_air_quality_etl
-from etl.etl_wather_forecast import run_weather_forecast_etl
+from etl.etl_weather_forecast import run_weather_forecast_etl
 
 
 def main():
@@ -30,7 +30,7 @@ def main():
         time.sleep(2)
         run_air_quality_etl()   
         time.sleep(2)
-        #run_osm_etl()
+        run_osm_etl()
         run_promet_etl()
         time.sleep(2)
         print("--- CIKLUS ZAVRŠEN. ČEKAM 15 MINUTA ---")

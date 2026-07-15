@@ -7,9 +7,9 @@ from etl.db_utils import get_db_connection
 
 # Konfiguracija boja za infrastrukturu
 KATEGORIJE_BOJA = {
-    "Bolnica": "red", "Gasilski dom": "orange", "Policija": "blue",
-    "Vrtic": "green", "Sola": "darkgreen", "Staracki dom": "purple",
-    "Apoteka": "lightred", "Benzinska pumpa": "gray", "Trafo stanica": "black",
+    "Bolnišnica": "red", "Gasilski dom": "orange", "Policija": "blue",
+    "Vrtec": "green", "Šola": "darkgreen", "Dom za starejše": "purple",
+    "Lekarna": "lightred", "Bencinski servis": "gray", "Transformatorska postaja": "black",
     "Hidrant": "cadetblue", "Klinika": "pink", "Zdravnik": "lightblue",
 }
 
@@ -88,13 +88,13 @@ def wind_direction_arrow(degrees):
     return arrows[idx]
 
 def render():
-    st.title("🚨 Operativni sistem za zaštitu i spašavanje")
-    st.markdown("---")
+    #st.title("🚨 Operativni sistem za zaštitu i spašavanje")
+    #st.markdown("---")
 
     # 1) PLANIRANJE INTERVENCIJE
     st.markdown("### 🛠️ 1. Planiranje intervencije")
-    radius = st.number_input("Radijus pretrage (metara)", min_value=100, max_value=10000, value=2000, step=100)
-    izbrane = st.multiselect("Kategorije objekata:", list(KATEGORIJE_BOJA.keys()), default=["Bolnica", "Gasilski dom", "Hidrant"])
+    radius = st.number_input("Radij iskanja (metri)", min_value=100, max_value=10000, value=2000, step=100)
+    izbrane = st.multiselect("Kategorije objektov:", list(KATEGORIJE_BOJA.keys()), default=["Bolnišnica", "Gasilski dom", "Hidrant"])
 
     if "sel_lat" not in st.session_state:
         st.session_state.sel_lat, st.session_state.sel_lon = None, None
@@ -128,24 +128,24 @@ def render():
 
     if st.session_state.sel_lat:
         rezultati = fetch_from_db(st.session_state.sel_lat, st.session_state.sel_lon, radius, tuple(izbrane))
-        st.metric("Ukupno resursa u radijusu", sum(len(v) for v in rezultati.values()))
+        st.metric("Skupaj virov v radiju", sum(len(v) for v in rezultati.values()))
         for naziv in izbrane:
             objekti = rezultati.get(naziv, [])
-            st.write(f"• **{naziv}:** {len(objekti)} objekata")
+            st.write(f"• **{naziv}:** {len(objekti)}")
             for obj in objekti:
                 st.caption(f"  - {obj['ime']} ({obj['naslov']}) ~ {obj['razdalja_m']}m")
 
     st.markdown("---")
 
     # 2) PROMETNI DOGAĐAJI
-    st.markdown("### 🚗 2. Prometni događaji")
+    st.markdown("### 🚗 2. Prometni dogodki")
     df = dohvati_prometne_podatke_za_mapu()
     if not df.empty:
         najnovije = df['updated'].max()
         najcesca_cesta = df['cesta'].mode()[0] if not df['cesta'].mode().empty else "N/A"
-        st.caption(f"🕒 Zadnji podaci: {najnovije.strftime('%d.%m. %H:%M')}")
-        st.caption(f"Ukupno incidenata: **{len(df)}** | Zapor/blokad: **{df[df['opis'].str.contains('zapora|blokada', case=False, na=False)].shape[0]}**")
-        st.caption(f"Najkritičnija cesta: **{najcesca_cesta}**")
+        st.caption(f"🕒 Zadnji podatki: {najnovije.strftime('%d.%m. %H:%M')}")
+        st.caption(f"Skupaj incidentov: **{len(df)}** | Zapor/blokad: **{df[df['opis'].str.contains('zapora|blokada', case=False, na=False)].shape[0]}**")
+        st.caption(f"Najbolj kritična cesta:: **{najcesca_cesta}**")
         m_promet = folium.Map(location=[46.1512, 14.9955], zoom_start=8)
         for _, row in df.iterrows():
             if pd.notna(row['lat']) and pd.notna(row['lon']):
@@ -159,12 +159,13 @@ def render():
 
     # 3) GURS PROSTORNI SISTEM
     st.markdown("### 📍 3. GURS Prostorni sistem")
-    st.iframe("https://ipi.eprostor.gov.si/jv/", height=500)
+    #st.iframe("https://ipi.eprostor.gov.si/jv/", height=500)
+    components.iframe("https://ipi.eprostor.gov.si/jv/", height=500)
 
     st.markdown("---")
 
     # 4) VREMENSKA PROGNOZA
-    st.markdown("### 🌤️ 4. Vremenska prognoza")
+    st.markdown("### 🌤️ 4. Vremenska napoved")
     df_w = fetch_weather_forecast()
 
     if not df_w.empty:
@@ -173,11 +174,11 @@ def render():
         with col_reg:
             sel_region = st.selectbox("📍 Regija:", regije, index=regije.index("Ljubljana") if "Ljubljana" in regije else 0)
         with col_mode:
-            prikaz = st.radio("Prikaz:", ["Po danima", "Po satima"], horizontal=True)
+            prikaz = st.radio("Prikaz:", ["Po dnevih", "Po urah"], horizontal=True)
 
         df_region = df_w[df_w['region'] == sel_region].copy()
 
-        if prikaz == "Po danima":
+        if prikaz == "Po dnevih":
             df_daily = df_region.groupby('dan').agg(
                 temp_min=('temperature_2m', 'min'),
                 temp_max=('temperature_2m', 'max'),
@@ -190,7 +191,7 @@ def render():
                 opis=('weather_description', lambda x: x.mode()[0] if not x.mode().empty else x.iloc[0])
             ).reset_index()
 
-            st.markdown(f"#### 📅 7-dnevna prognoza — {sel_region}")
+            st.markdown(f"#### 📅 7-dnevna napoved — {sel_region}")
             cols = st.columns(len(df_daily))
             for i, (_, row) in enumerate(df_daily.iterrows()):
                 with cols[i]:
@@ -214,7 +215,7 @@ def render():
                     </div>
                     """, unsafe_allow_html=True)
 
-            st.markdown("##### 📊 Detaljna tabela")
+            st.markdown("##### 📊 Podrobna tabela")
             df_table = df_daily.copy()
             df_table['dan'] = df_table['dan'].apply(lambda d: pd.Timestamp(d).strftime('%A, %d.%m.%Y'))
             df_table.columns = ['Dan', 'Min temp (°C)', 'Max temp (°C)', 'Padavine (mm)',
@@ -227,7 +228,7 @@ def render():
             sel_dan = st.selectbox("📅 Dan:", dani, format_func=lambda d: pd.Timestamp(d).strftime('%A, %d.%m.%Y'))
             df_sat = df_region[df_region['dan'] == sel_dan].copy()
 
-            st.markdown(f"#### 🕐 Satna prognoza — {sel_region}, {pd.Timestamp(sel_dan).strftime('%d.%m.%Y')}")
+            st.markdown(f"#### 🕐 Urna napoved — {sel_region}, {pd.Timestamp(sel_dan).strftime('%d.%m.%Y')}")
             for _, row in df_sat.iterrows():
                 ikona = weather_icon(row['weather_description'])
                 arrow = wind_direction_arrow(row['wind_direction_10m'] if pd.notna(row['wind_direction_10m']) else 0)
@@ -241,26 +242,26 @@ def render():
                     with c3:
                         st.metric("🌧️ Padavine", f"{row['precipitation']:.1f}mm", delta=f"{row['precipitation_prob']}% vjerovatnoća", delta_color="off")
                     with c4:
-                        st.metric(f"💨 Vjetar {arrow}", f"{row['wind_speed_10m']:.0f} km/h", delta=f"udari {row['wind_gusts_10m']:.0f} km/h", delta_color="off")
+                        st.metric(f"💨 Veter {arrow}", f"{row['wind_speed_10m']:.0f} km/h", delta=f"udari {row['wind_gusts_10m']:.0f} km/h", delta_color="off")
                     with c5:
                         st.caption(f"💧 Vlažnost: **{row['humidity_2m']}%** &nbsp;|&nbsp; ☁️ Oblačnost: **{row['cloud_cover']}%**")
                         if pd.notna(row['snowfall']) and row['snowfall'] > 0:
-                            st.caption(f"❄️ Snijeg: **{row['snowfall']:.1f}cm**")
+                            st.caption(f"❄️ Sneg: **{row['snowfall']:.1f}cm**")
                         st.caption(f"_{row['weather_description']}_")
                     st.divider()
 
-            st.markdown("##### 📊 Tabela satnih podataka")
+            st.markdown("##### 📊 Tabela urnih podatkov")
             df_sat_table = df_sat[['sat', 'temperature_2m', 'apparent_temperature',
                                     'precipitation', 'precipitation_prob',
                                     'wind_speed_10m', 'wind_gusts_10m',
                                     'humidity_2m', 'cloud_cover', 'weather_description']].copy()
-            df_sat_table.columns = ['Sat', 'Temp (°C)', 'Osj. temp (°C)', 'Padavine (mm)',
-                                     'Vjer. kiše (%)', 'Vjetar (km/h)', 'Udari (km/h)',
+            df_sat_table.columns = ['Ura', 'Temp (°C)', 'Obč. temp (°C)', 'Padavine (mm)',
+                                     'Verj. dežja (%)', 'Veter (km/h)', 'Sunki (km/h)',
                                      'Vlažnost (%)', 'Oblačnost (%)', 'Opis']
             st.dataframe(df_sat_table.round(1), width='stretch', hide_index=True)
 
     else:
-        st.warning("⚠️ Nema podataka o vremenskoj prognozi u bazi.")
+        st.warning("⚠️ V bazi ni podatkov o vremenski napovedi.")
 
 if __name__ == "__main__":
     render()
